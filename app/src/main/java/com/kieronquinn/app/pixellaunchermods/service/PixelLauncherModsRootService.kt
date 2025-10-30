@@ -9,10 +9,20 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.om.IOverlayManager
+import android.content.om.OverlayIdentifier
+import android.content.om.OverlayInfo
 import android.content.om.OverlayManagerTransaction
 import android.content.pm.ILauncherApps
 import android.content.pm.IOnAppsChangedListener
-import android.os.*
+import android.os.Binder
+import android.os.Build
+import android.os.Bundle
+import android.os.FileObserver
+import android.os.IBinder
+import android.os.IInterface
+import android.os.Process
+import android.os.RemoteException
+import android.os.UserHandle
 import android.system.Os
 import com.android.internal.appwidget.IAppWidgetService
 import com.kieronquinn.app.pixellaunchermods.BuildConfig
@@ -26,13 +36,23 @@ import com.kieronquinn.app.pixellaunchermods.model.remote.RemoteApp
 import com.kieronquinn.app.pixellaunchermods.model.remote.RemoteFavourite
 import com.kieronquinn.app.pixellaunchermods.model.remote.RemoteWidget
 import com.kieronquinn.app.pixellaunchermods.repositories.HideClockRepositoryImpl.Companion.SETTINGS_KEY_ICON_BLACKLIST
-import com.kieronquinn.app.pixellaunchermods.utils.extensions.*
+import com.kieronquinn.app.pixellaunchermods.utils.extensions.Bitmap_getSize
+import com.kieronquinn.app.pixellaunchermods.utils.extensions.SharedPreferences_openFile
+import com.kieronquinn.app.pixellaunchermods.utils.extensions.collectUntilTimeout
+import com.kieronquinn.app.pixellaunchermods.utils.extensions.extractLegacyNormalIcon
+import com.kieronquinn.app.pixellaunchermods.utils.extensions.firstNotNull
+import com.kieronquinn.app.pixellaunchermods.utils.extensions.loadLibrary
+import com.kieronquinn.app.pixellaunchermods.utils.extensions.map
 import com.kieronquinn.app.pixellaunchermods.utils.widget.ProxyAppWidgetService
 import com.topjohnwu.superuser.internal.Utils
 import com.topjohnwu.superuser.ipc.RootService
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.sqlite.database.sqlite.SQLiteDatabase
 import rikka.shizuku.SystemServiceHelper
 import java.io.File
@@ -53,6 +73,8 @@ class PixelLauncherModsRootServiceImpl: IPixelLauncherModsRootService.Stub() {
         private const val APP_ICONS_DATABASE = "app_icons.db"
         private const val PIXEL_LAUNCHER_SHARED_PREFS_NAME = "com.android.launcher3.prefs.xml"
         private const val SHARED_PREFS_KEY_THEMED_ICONS = "themed_icons"
+        private const val SHARED_PREFS_KEY_THEME_ID = "icon_theme_id"
+        private const val SHARED_PREFS_THEMED_ICONS_ENABLED = "mono-icons"
         private const val SHARED_PREFS_KEY_GRID_SIZE = "migration_src_workspace_size"
 
         private const val PLM_DATABASE_TABLE_ICONS = "icons"
@@ -330,7 +352,11 @@ class PixelLauncherModsRootServiceImpl: IPixelLauncherModsRootService.Stub() {
 
     override fun areThemedIconsEnabled(): Boolean {
         val pixelLauncherSharedPrefs = SharedPreferences_openFile(pixelLauncherSharedPrefsFile)
-        return pixelLauncherSharedPrefs.getBoolean(SHARED_PREFS_KEY_THEMED_ICONS, false)
+        return pixelLauncherSharedPrefs.getBoolean(
+            SHARED_PREFS_KEY_THEMED_ICONS, false
+        ) || pixelLauncherSharedPrefs.getString(
+            SHARED_PREFS_KEY_THEME_ID, ""
+        )?.startsWith(SHARED_PREFS_THEMED_ICONS_ENABLED) == true
     }
 
     override fun loadDatabase(modifiedApps: ParceledListSlice<Bundle>): ParceledListSlice<Bundle> {
@@ -755,12 +781,17 @@ class PixelLauncherModsRootServiceImpl: IPixelLauncherModsRootService.Stub() {
         restartPixelLauncher()
     }
 
+    @SuppressLint("NewApi", "PrivateApi")
     override fun enableOverlay() {
         val overlay = overlayManager.getOverlayInfo(OVERLAY_PACKAGE_NAME, currentUserId)
         val overlayIdentifier = overlay?.overlayIdentifier ?: return
-        overlayManager.commit(OverlayManagerTransaction.Builder()
-            .setEnabled(overlayIdentifier, true)
-            .build())
+        val builder = Class.forName("android.content.om.OverlayManagerTransaction\$Builder")
+            .getConstructor().newInstance()
+        builder::class.java.getMethod(
+            "setEnabled", OverlayIdentifier::class.java, Boolean::class.java
+        ).invoke(builder, overlayIdentifier, true)
+        val transaction = builder::class.java.getMethod("build").invoke(builder)
+        overlayManager.commit(transaction as OverlayManagerTransaction)
     }
 
     override fun isOverlayInstalled(): Boolean {
@@ -768,9 +799,11 @@ class PixelLauncherModsRootServiceImpl: IPixelLauncherModsRootService.Stub() {
         return overlay != null
     }
 
+    @SuppressLint("NewApi")
     override fun isOverlayEnabled(): Boolean {
         val overlay = overlayManager.getOverlayInfo(OVERLAY_PACKAGE_NAME, currentUserId)
-        return overlay?.isEnabled ?: false
+            ?: return false
+        return OverlayInfo::class.java.getMethod("isEnabled").invoke(overlay) as Boolean
     }
 
     override fun setSearchWidgetPackageEnabled(enabled: Boolean) {

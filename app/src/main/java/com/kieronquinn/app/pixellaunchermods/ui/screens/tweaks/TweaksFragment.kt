@@ -5,6 +5,7 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import androidx.activity.result.contract.ActivityResultContracts
 import com.kieronquinn.app.pixellaunchermods.R
+import com.kieronquinn.app.pixellaunchermods.SEARCH_HIDE_ONLY
 import com.kieronquinn.app.pixellaunchermods.ui.base.CanShowSnackbar
 import com.kieronquinn.app.pixellaunchermods.ui.base.ProvidesOverflow
 import com.kieronquinn.app.pixellaunchermods.ui.base.settings.BaseSettingsAdapter
@@ -41,7 +42,11 @@ class TweaksFragment: BaseSettingsFragment(), CanShowSnackbar, ProvidesOverflow 
             SettingsItem.Text(
                 icon = R.drawable.ic_tweaks_widget_replacement,
                 titleRes = R.string.tweaks_widget_replacement,
-                contentRes = R.string.tweaks_widget_replacement_content,
+                contentRes = if(SEARCH_HIDE_ONLY) {
+                    R.string.tweaks_widget_replacement_content_hide
+                }else{
+                    R.string.tweaks_widget_replacement_content
+                },
                 onClick = viewModel::onWidgetReplacementClicked
             ),
             SettingsItem.Text(

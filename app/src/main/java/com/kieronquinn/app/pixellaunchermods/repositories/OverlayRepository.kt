@@ -9,7 +9,12 @@ import com.kieronquinn.app.pixellaunchermods.PIXEL_LAUNCHER_PACKAGE_NAME
 import com.kieronquinn.app.pixellaunchermods.model.tweaks.WidgetReplacement
 import com.kieronquinn.app.pixellaunchermods.repositories.OverlayRepository.OverlayConfig
 import com.kieronquinn.app.pixellaunchermods.repositories.OverlayRepository.OverlayProgress
-import com.kieronquinn.app.pixellaunchermods.utils.extensions.*
+import com.kieronquinn.app.pixellaunchermods.utils.extensions.attribute
+import com.kieronquinn.app.pixellaunchermods.utils.extensions.copyRecursively
+import com.kieronquinn.app.pixellaunchermods.utils.extensions.createPixelLauncherResources
+import com.kieronquinn.app.pixellaunchermods.utils.extensions.document
+import com.kieronquinn.app.pixellaunchermods.utils.extensions.element
+import com.kieronquinn.app.pixellaunchermods.utils.extensions.rawResourceContains
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -94,6 +99,7 @@ class OverlayRepositoryImpl(
         private const val OVERLAY_RESOURCE_NAME_QSB_SEARCH = "search_container_hotseat"
         private const val OVERLAY_RESOURCE_NAME_WALLPAPER_SCRIM = "wallpaper_scrim_color"
         private const val OVERLAY_RESOURCE_REPLACEMENT_SEARCH_TERM = "QsbContainerView"
+        private const val OVERLAY_RESOURCE_HIDDEN_SEARCH_TERM = "plm_hidden"
 
         private val DRAWABLE_DIRS = arrayOf(
             "drawable-mdpi-v31",
@@ -236,7 +242,7 @@ class OverlayRepositoryImpl(
 
     @SuppressLint("UnsafeOptInUsageError")
     private fun writeSearchContainer(widgetReplacement: WidgetReplacement) {
-        if(widgetReplacement != WidgetReplacement.BOTTOM) {
+        if(widgetReplacement != WidgetReplacement.BOTTOM && widgetReplacement != WidgetReplacement.HIDDEN) {
             //This option is disabled
             return
         }
@@ -251,11 +257,20 @@ class OverlayRepositoryImpl(
                 attribute("android:layout_height", "0dp")
                 attribute("android:padding", "0dp")
 
-                element("fragment") {
-                    attribute("android:name", "com.android.launcher3.qsb.QsbContainerView\$QsbFragment")
-                    attribute("android:layout_width", "match_parent")
-                    attribute("android:tag", "qsb_view")
-                    attribute("android:layout_height", "match_parent")
+                if(widgetReplacement != WidgetReplacement.HIDDEN) {
+                    element("include") {
+                        element("fragment") {
+                            attribute(
+                                "android:name",
+                                "com.android.launcher3.qsb.QsbContainerView\$QsbFragment"
+                            )
+                            attribute("android:layout_width", "match_parent")
+                            attribute("android:tag", "qsb_view")
+                            attribute("android:layout_height", "match_parent")
+                        }
+                    }
+                }else{
+                    attribute("android:tag", OVERLAY_RESOURCE_HIDDEN_SEARCH_TERM)
                 }
             }
         }
@@ -486,6 +501,9 @@ class OverlayRepositoryImpl(
         if(resources.rawResourceContains(hotseatResourceIdentifier, OVERLAY_RESOURCE_REPLACEMENT_SEARCH_TERM)){
             return@withContext WidgetReplacement.BOTTOM
         }
+        if(resources.rawResourceContains(hotseatResourceIdentifier, OVERLAY_RESOURCE_HIDDEN_SEARCH_TERM)){
+            return@withContext WidgetReplacement.HIDDEN
+        }
         val smartspaceResourceIdentifier = resources.getIdentifier(
             OVERLAY_RESOURCE_NAME_QSB_SMARTSPACE, "layout", PIXEL_LAUNCHER_PACKAGE_NAME
         )
@@ -515,7 +533,7 @@ class OverlayRepositoryImpl(
     private fun WidgetReplacement.toResourceName(): String? {
         return when(this){
             WidgetReplacement.TOP -> OVERLAY_RESOURCE_NAME_QSB_SMARTSPACE
-            WidgetReplacement.BOTTOM -> OVERLAY_RESOURCE_NAME_QSB_SEARCH
+            WidgetReplacement.BOTTOM, WidgetReplacement.HIDDEN -> OVERLAY_RESOURCE_NAME_QSB_SEARCH
             else -> null
         }
     }

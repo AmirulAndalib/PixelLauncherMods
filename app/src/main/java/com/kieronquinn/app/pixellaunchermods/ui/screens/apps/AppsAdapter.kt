@@ -71,6 +71,7 @@ class AppsAdapter(
         }
         glide.load(RemoteAppOptions(app, false))
             .diskCacheStrategy(DiskCacheStrategy.NONE)
+            .circleCrop()
             .into(appIcon)
     }
 

@@ -3,10 +3,8 @@ package com.kieronquinn.app.pixellaunchermods.ui.screens.tweaks.hideapps
 import android.content.pm.LauncherActivityInfo
 import android.net.Uri
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kieronquinn.app.pixellaunchermods.BuildConfig
 import com.kieronquinn.app.pixellaunchermods.components.navigation.ContainerNavigation
 import com.kieronquinn.app.pixellaunchermods.repositories.AppsRepository
 import com.kieronquinn.app.pixellaunchermods.repositories.OverlayRepository
@@ -66,7 +64,6 @@ class HideAppsViewModelImpl(
 
     private val allApps = flow {
         val apps = appsRepository.getAllLauncherApps()
-            .filterNot { it.applicationInfo.packageName == BuildConfig.APPLICATION_ID }
             .sortedBy { it.label.toString().lowercase() }
         emit(apps)
     }

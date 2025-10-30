@@ -112,10 +112,12 @@
     <string name="tweaks_widget_replacement_preview_top">Top</string>
     <string name="tweaks_widget_replacement">Search Box</string>
     <string name="tweaks_widget_replacement_content"><b>Experimental:</b> Replace the Search Box with a widget of your choice</string>
+    <string name="tweaks_widget_replacement_content_hide"><b>Experimental:</b> Hide the Search Box</string>
     <string name="proxy_widget_loading">Loading…</string>
     <string name="proxy_widget_empty">Tap to configure</string>
     <string name="proxy_widget_error">This widget failed to load\nTry a different widget</string>
     <string name="tweaks_widget_replacement_switch">Enable Replacement</string>
+    <string name="tweaks_widget_replacement_switch_hide">Hide Search Box</string>
     <string name="tweaks_widget_replacement_provider">Select Widget</string>
     <string name="tweaks_widget_replacement_provider_content_unset">Set the widget to show</string>
     <string name="tweaks_widget_replacement_provider_content_set">Set the widget to show. Currently set to %1s.</string>
@@ -124,6 +126,7 @@
     <string name="tweaks_widget_replacement_loading">Loading…</string>
     <string name="tweaks_widget_replacement_save">Apply</string>
     <string name="tweaks_widget_replacement_info"><b>Note:</b> Not all widgets are compatible with this feature. If your chosen widget fails to load (for example it stays blank or shows the generic search box), try a different one.</string>
+    <string name="tweaks_widget_replacement_info_hide"><b>Note:</b> Replacing the search box is no longer supported. A blank area will remain when this option is enabled, this cannot be changed.</string>
     <string name="tweaks_widget_replacement_incompatible">Sorry, this option is not compatible with your device.\n\n<b>Note:</b> If it\'s enabled from a previous Android version, you can disable it.</string>
     <string name="tweaks_overlay">Overlay UI Tweaks</string>
     <string name="tweaks_overlay_content">UI tweaks using overlays</string>

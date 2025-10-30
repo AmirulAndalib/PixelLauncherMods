@@ -1,6 +1,7 @@
 package com.kieronquinn.app.pixellaunchermods
 
 import android.app.Application
+import android.os.Build
 import androidx.core.content.res.ResourcesCompat
 import com.google.gson.Gson
 import com.kieronquinn.app.pixellaunchermods.components.navigation.ContainerNavigation
@@ -203,3 +204,4 @@ class PixelLauncherMods: Application() {
 const val PIXEL_LAUNCHER_PACKAGE_NAME = "com.google.android.apps.nexuslauncher"
 const val OVERLAY_PACKAGE_NAME = "com.google.android.apps.nexuslauncher.plmoverlay"
 const val LAWNICONS_PACKAGE_NAME = "app.lawnchair.lawnicons"
+val SEARCH_HIDE_ONLY = Build.VERSION.SDK_INT >= 35

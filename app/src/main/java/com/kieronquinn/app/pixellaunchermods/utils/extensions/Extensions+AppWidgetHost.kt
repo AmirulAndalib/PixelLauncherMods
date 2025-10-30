@@ -29,7 +29,7 @@ suspend fun AppWidgetHostView.renderToBitmap(replacement: WidgetReplacement): Bi
     val height = when(replacement){
         WidgetReplacement.TOP -> R.dimen.widget_preview_height_top
         WidgetReplacement.BOTTOM -> R.dimen.widget_preview_height_bottom
-        WidgetReplacement.NONE -> 0
+        WidgetReplacement.NONE, WidgetReplacement.HIDDEN -> 0
     }.run {
         context.resources.getDimension(this).toInt()
     }

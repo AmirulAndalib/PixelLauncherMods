@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 
 class WidgetReplacementAdapter(
     recyclerView: RecyclerView,
+    val hideOnly: Boolean,
     var items: List<Item>,
     private val getWidgetView: suspend (WidgetPosition) -> AppWidgetHostView?,
     private val onSwitchChanged: (Boolean) -> Unit,
@@ -81,13 +82,18 @@ class WidgetReplacementAdapter(
             is ViewHolder.Preview -> holder.binding.setup(items[position] as Item.Preview, holder)
             is ViewHolder.ProviderPicker -> holder.binding.setup(items[position] as Item.ProviderPicker, holder)
             is ViewHolder.ProviderReconfigure -> holder.binding.setup(items[position] as Item.ProviderReconfigure, holder)
-            is ViewHolder.Info -> {} //Nothing to do
+            is ViewHolder.Info -> holder.binding.setup()
             is ViewHolder.Incompatible -> {} //Nothing to do
         }
     }
 
     private fun ItemTweaksWidgetReplacementSwitchBinding.setup(item: Item.Switch, holder: ViewHolder) {
         tweaksWidgetReplacementSwitch.isChecked = item.enabled
+        tweaksWidgetReplacementSwitch.text = if(hideOnly) {
+            root.context.getString(R.string.tweaks_widget_replacement_switch_hide)
+        }else{
+            root.context.getString(R.string.tweaks_widget_replacement_switch)
+        }
         holder.lifecycleScope.launchWhenResumed {
             tweaksWidgetReplacementSwitch.onClicked().collect {
                 onSwitchChanged(tweaksWidgetReplacementSwitch.isChecked)
@@ -137,6 +143,14 @@ class WidgetReplacementAdapter(
             root.onClicked().collect {
                 onReconfigureClicked()
             }
+        }
+    }
+
+    private fun ItemTweaksWidgetReplacementInfoBinding.setup() {
+        itemTweaksWidgetReplacementInfoText.text = if(hideOnly) {
+            root.context.getString(R.string.tweaks_widget_replacement_info_hide)
+        }else{
+            root.context.getString(R.string.tweaks_widget_replacement_info)
         }
     }
 

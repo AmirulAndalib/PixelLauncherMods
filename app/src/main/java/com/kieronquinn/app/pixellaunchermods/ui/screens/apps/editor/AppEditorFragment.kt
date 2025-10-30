@@ -20,7 +20,11 @@ import com.kieronquinn.app.pixellaunchermods.databinding.FragmentAppEditorBindin
 import com.kieronquinn.app.pixellaunchermods.model.editor.AppEditorInfo
 import com.kieronquinn.app.pixellaunchermods.model.remote.RemoteApp
 import com.kieronquinn.app.pixellaunchermods.model.remote.RemoteAppOptions
-import com.kieronquinn.app.pixellaunchermods.ui.base.*
+import com.kieronquinn.app.pixellaunchermods.ui.base.BackAvailable
+import com.kieronquinn.app.pixellaunchermods.ui.base.BoundFragment
+import com.kieronquinn.app.pixellaunchermods.ui.base.LockCollapsed
+import com.kieronquinn.app.pixellaunchermods.ui.base.ProvidesOverflow
+import com.kieronquinn.app.pixellaunchermods.ui.base.ProvidesTitle
 import com.kieronquinn.app.pixellaunchermods.ui.screens.apps.editor.AppEditorViewModel.State
 import com.kieronquinn.app.pixellaunchermods.ui.screens.iconpicker.BasePickerFragment.Companion.KEY_RESULT_EXTRA_NORMAL_RESULT
 import com.kieronquinn.app.pixellaunchermods.ui.screens.iconpicker.BasePickerFragment.Companion.KEY_RESULT_EXTRA_THEMED_RESULT
@@ -168,12 +172,14 @@ class AppEditorFragment: BoundFragment<FragmentAppEditorBinding>(FragmentAppEdit
         glide.load(RemoteAppOptions(remoteApp, false))
             .diskCacheStrategy(DiskCacheStrategy.NONE)
             .skipMemoryCache(true)
+            .circleCrop()
             .transition(DrawableTransitionOptions.withCrossFade())
             .into(appEditorIconContainer.appEditorIconNormal)
         if(showThemedIcon) {
             glide.load(RemoteAppOptions(remoteApp, true))
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
                 .skipMemoryCache(true)
+                .circleCrop()
                 .transition(DrawableTransitionOptions.withCrossFade())
                 .into(appEditorIconContainer.appEditorIconThemed)
         }else{

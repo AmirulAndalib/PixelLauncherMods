@@ -15,7 +15,7 @@
         android:paddingStart="@dimen/item_app_icon_padding_normal"
         android:paddingTop="@dimen/item_app_icon_padding_normal"
         android:paddingEnd="@dimen/item_app_icon_padding_normal"
-        android:paddingBottom="8dp"
+        android:outlineProvider="background"
         android:layout_gravity="center_horizontal"
         android:stateListAnimator="@animator/zoom_in_animator"
         tools:src="@mipmap/ic_launcher" />

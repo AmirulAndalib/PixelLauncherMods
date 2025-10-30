@@ -3,14 +3,14 @@ plugins {
 }
 
 android {
-    compileSdk 33
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.google.android.apps.nexuslauncher.plmoverlay"
 
         //Also change in the Manifest - required for dynamic building
         minSdk 31
-        targetSdk 33
+        targetSdk 36
         versionCode 1
         versionName "1.0"
 

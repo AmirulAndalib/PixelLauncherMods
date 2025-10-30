@@ -3,12 +3,13 @@ package com.kieronquinn.app.pixellaunchermods.ui.screens.tweaks.widgetreplacemen
 import android.appwidget.AppWidgetHostView
 import android.appwidget.AppWidgetProviderInfo
 import android.net.Uri
-import android.os.Build
+import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.core.app.ActivityOptionsCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kieronquinn.app.pixellaunchermods.SEARCH_HIDE_ONLY
 import com.kieronquinn.app.pixellaunchermods.components.navigation.ContainerNavigation
 import com.kieronquinn.app.pixellaunchermods.model.tweaks.ParceledWidgetReplacement
 import com.kieronquinn.app.pixellaunchermods.model.tweaks.WidgetReplacement
@@ -77,7 +78,7 @@ class WidgetReplacementViewModelImpl(
 ): WidgetReplacementViewModel() {
 
     private val reloadBus = MutableStateFlow(System.currentTimeMillis())
-    private val available = Build.VERSION.SDK_INT < 35
+    private val hideOnly = SEARCH_HIDE_ONLY
 
     private val replacementState = flow {
         emit(overlayRepository.getWidgetReplacement())
@@ -104,13 +105,17 @@ class WidgetReplacementViewModelImpl(
     ){ switch, toggle, remote ->
         when {
             switch != null && !switch -> WidgetReplacement.NONE
-            toggle == WidgetPosition.TOP -> WidgetReplacement.BOTTOM
-            toggle == WidgetPosition.BOTTOM -> WidgetReplacement.BOTTOM
+            toggle == WidgetPosition.TOP -> {
+                if(hideOnly) WidgetReplacement.HIDDEN else WidgetReplacement.BOTTOM
+            }
+            toggle == WidgetPosition.BOTTOM -> {
+                if(hideOnly) WidgetReplacement.HIDDEN else WidgetReplacement.BOTTOM
+            }
             switch != null && remote != WidgetReplacement.NONE -> {
                 remote //Default to whatever the remote value is if one is set
             }
             switch != null -> {
-                WidgetReplacement.BOTTOM
+                if(hideOnly) WidgetReplacement.HIDDEN else WidgetReplacement.BOTTOM
             }
             else -> null
         }
@@ -123,25 +128,31 @@ class WidgetReplacementViewModelImpl(
         provider
     ) { installed, replacement, localReplacement, provider ->
         if(!installed) return@combine State.ModuleRequired
-        val providerInfo = widgetRepository.getProviderInfo(provider)
         val bestReplacement = localReplacement ?: replacement
-        val enabled = bestReplacement != WidgetReplacement.NONE
-        val canReconfigure = providerInfo?.let {
-            it.widgetFeatures and AppWidgetProviderInfo.WIDGET_FEATURE_RECONFIGURABLE != 0
-        } ?: false
-        val widgetPosition = when(bestReplacement){
-            WidgetReplacement.TOP -> WidgetPosition.BOTTOM
-            WidgetReplacement.BOTTOM -> WidgetPosition.BOTTOM
-            WidgetReplacement.NONE -> WidgetPosition.BOTTOM //Default to top, although it will be hidden
+        val items = if(hideOnly) {
+            val enabled = bestReplacement == WidgetReplacement.HIDDEN
+            listOf(Item.Switch(enabled), Item.Info)
+        }else{
+            val providerInfo = widgetRepository.getProviderInfo(provider)
+            val enabled = bestReplacement != WidgetReplacement.NONE
+            val canReconfigure = providerInfo?.let {
+                it.widgetFeatures and AppWidgetProviderInfo.WIDGET_FEATURE_RECONFIGURABLE != 0
+            } ?: false
+            val widgetPosition = when (bestReplacement) {
+                WidgetReplacement.TOP -> WidgetPosition.BOTTOM
+                WidgetReplacement.BOTTOM -> WidgetPosition.BOTTOM
+                WidgetReplacement.NONE, WidgetReplacement.HIDDEN -> {
+                    WidgetPosition.BOTTOM
+                } //Default to top, although it will be hidden
+            }
+            listOfNotNull(
+                Item.Switch(enabled),
+                if (enabled) Item.Preview(widgetPosition) else null,
+                Item.Info,
+                if (enabled) Item.ProviderPicker(providerInfo) else null,
+                if (enabled && canReconfigure) Item.ProviderReconfigure else null,
+            )
         }
-        val items = listOfNotNull(
-            if (enabled || available) Item.Switch(enabled) else null,
-            if (enabled && available) Item.Preview(widgetPosition) else null,
-            Item.Info.takeIf { available },
-            if (enabled && available) Item.ProviderPicker(providerInfo) else null,
-            if (enabled && canReconfigure && available) Item.ProviderReconfigure else null,
-            if(!available) Item.Incompatible(enabled) else null
-        )
         State.Loaded(localReplacement != null, items)
     }
 
@@ -166,8 +177,10 @@ class WidgetReplacementViewModelImpl(
 
     override fun onSaveClicked() {
         var localReplacement = localWidgetReplacement.value ?: return
-        //Always disable if no longer available
-        if(!available) localReplacement = WidgetReplacement.NONE
+        //If hide only and set to anything other than none, then hide search
+        if(hideOnly && localReplacement != WidgetReplacement.NONE) {
+            localReplacement = WidgetReplacement.HIDDEN
+        }
         viewModelScope.launch {
             navigation.navigate(WidgetReplacementFragmentDirections
                 .actionTweaksWidgetReplacementFragmentToTweaksApplyFragment(

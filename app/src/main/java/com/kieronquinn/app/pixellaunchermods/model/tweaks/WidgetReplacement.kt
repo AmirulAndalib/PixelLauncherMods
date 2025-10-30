@@ -5,7 +5,7 @@ import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
 enum class WidgetReplacement {
-    NONE, TOP, BOTTOM
+    NONE, TOP, BOTTOM, HIDDEN
 }
 
 @Parcelize

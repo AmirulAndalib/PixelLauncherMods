@@ -9,6 +9,7 @@ import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.kieronquinn.app.pixellaunchermods.R
+import com.kieronquinn.app.pixellaunchermods.SEARCH_HIDE_ONLY
 import com.kieronquinn.app.pixellaunchermods.databinding.FragmentTweaksWidgetReplacementBinding
 import com.kieronquinn.app.pixellaunchermods.ui.base.BackAvailable
 import com.kieronquinn.app.pixellaunchermods.ui.base.BoundFragment
@@ -28,6 +29,7 @@ class WidgetReplacementFragment: BoundFragment<FragmentTweaksWidgetReplacementBi
     private val adapter by lazy {
         WidgetReplacementAdapter(
             binding.tweaksWidgetReplacementRecyclerview,
+            SEARCH_HIDE_ONLY,
             emptyList(),
             viewModel::getWidgetView,
             viewModel::onSwitchStateChanged,
